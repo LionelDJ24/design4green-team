@@ -3,53 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Design4Green - Résumeur de texte</title>
+    <title>Résumeur Éco-Responsable</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Résumé de texte Design4Green</h1>
-        
-        <textarea id="inputText" placeholder="Collez votre texte ici (max 4000 caractères)"></textarea>
+    <main class="container">
+        <h1>🌱 Résumeur Éco-Responsable</h1>
+        <p class="subtitle">Design for Green – Résumé en 10-15 mots avec suivi énergétique</p>
 
-        <div class="options">
-            <label>
-                <input type="checkbox" id="optimizedCheckbox">
-                Mode optimisé
-            </label>
-            <button id="summarizeBtn">Générer le résumé</button>
-        </div>
+        <form id="resumeForm" onsubmit="return false;">
+            <label for="inputText">Texte à résumer (max 4000 caractères)</label>
+            <textarea id="inputText" maxlength="4000" placeholder="Collez votre texte ici..."></textarea>
 
-        <div id="results">
-            <h2>Résumé :</h2>
-            <p id="summary"></p>
+            <div class="charcount"><span id="chars">0</span> / 4000 caractères</div>
 
-            <h3>Métriques :</h3>
-            <ul>
-                <li>Latence : <span id="latency">-</span> ms</li>
-                <li>Énergie : <span id="energy">-</span> Wh</li>
-                <li>Mémoire : <span id="memory">-</span> MB</li>
-            </ul>
-        </div>
-    </div>
+            <div class="modes">
+                <label><input type="radio" name="mode" value="baseline"> Baseline (FP32)</label>
+                <label><input type="radio" name="mode" value="optimized" checked> Optimisé </label>
+            </div>
 
+            <button id="generateBtn" class="btn">Générer le résumé</button>
+
+            <p class="error" id="error" hidden>❌ Failed to fetch</p>
+        </form>
+    </main>
+
+   
     <script>
-        const btn = document.getElementById("summarizeBtn");
-        btn.addEventListener("click", async () => {
-            const text = document.getElementById("inputText").value;
-            const optimized = document.getElementById("optimizedCheckbox").checked;
+        const textarea = document.getElementById("inputText");
+        const counter = document.getElementById("chars");
 
-            const response = await fetch("/summarize", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, optimized })
-            });
-
-            const data = await response.json();
-            document.getElementById("summary").textContent = data.summary;
-            document.getElementById("latency").textContent = data.latency_ms.toFixed(2);
-            document.getElementById("energy").textContent = data.energy_wh.toFixed(4);
-            document.getElementById("memory").textContent = data.memory_mb.toFixed(2);
+        textarea.addEventListener("input", () => {
+            const count = textarea.value.length;
+            counter.textContent = count;
+            if (count >= 4000) {
+                counter.style.color = "crimson";
+            } else if (count > 3600) {
+                counter.style.color = "#c77";
+            } else {
+                counter.style.color = "";
+            }
         });
     </script>
 </body>
