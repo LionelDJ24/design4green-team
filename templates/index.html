@@ -1,35 +1,56 @@
-<!DOCTYPE html><html><head>
-  <title>Résumé éco-responsable - Design4Green</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
-  <h1>🌱 Design4Green - Résumeur léger</h1>
-  <form id="form">
-    <textarea id="text" placeholder="Collez votre texte ici..."></textarea>
-    <br>
-    <label><input type="checkbox" id="optimized"> Mode optimisé</label>
-    <button type="button" onclick="summarize()">Résumer</button>
-  </form>
-  <div id="result"></div>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design4Green - Résumeur de texte</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Résumé de texte Design4Green</h1>
+        
+        <textarea id="inputText" placeholder="Collez votre texte ici (max 4000 caractères)"></textarea>
 
-  <script>async function summarize() {
-      const text = document.getElementById("text").value;
-      const optimized = document.getElementById("optimized").checked;
-      const resultDiv = document.getElementById("result");
+        <div class="options">
+            <label>
+                <input type="checkbox" id="optimizedCheckbox">
+                Mode optimisé
+            </label>
+            <button id="summarizeBtn">Générer le résumé</button>
+        </div>
 
-      resultDiv.innerHTML = "<p>⏳ Génération du résumé...</p>";
+        <div id="results">
+            <h2>Résumé :</h2>
+            <p id="summary"></p>
 
-      const response = await fetch("/summarize", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text, optimized})
-      });
+            <h3>Métriques :</h3>
+            <ul>
+                <li>Latence : <span id="latency">-</span> ms</li>
+                <li>Énergie : <span id="energy">-</span> Wh</li>
+                <li>Mémoire : <span id="memory">-</span> MB</li>
+            </ul>
+        </div>
+    </div>
 
-      const data = await response.json();
-      resultDiv.innerHTML = `
-        <p><b>Résumé :</b> ${data.summary}</p>
-        <p>Mode : ${data.optimized ? "Optimisé ⚡" : "Baseline 🧠"}</p>
-        <p>Latence : ${data.latency_ms} ms</p>
-        <p>Énergie : ${data.energy_wh} Wh</p>
-        <p>Mémoire : ${data.memory_mb} MB</p>
-      `;
-    }
-  </script></body></html>
+    <script>
+        const btn = document.getElementById("summarizeBtn");
+        btn.addEventListener("click", async () => {
+            const text = document.getElementById("inputText").value;
+            const optimized = document.getElementById("optimizedCheckbox").checked;
+
+            const response = await fetch("/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, optimized })
+            });
+
+            const data = await response.json();
+            document.getElementById("summary").textContent = data.summary;
+            document.getElementById("latency").textContent = data.latency_ms.toFixed(2);
+            document.getElementById("energy").textContent = data.energy_wh.toFixed(4);
+            document.getElementById("memory").textContent = data.memory_mb.toFixed(2);
+        });
+    </script>
+</body>
+</html>
