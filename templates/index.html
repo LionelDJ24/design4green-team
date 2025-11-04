@@ -1,0 +1,35 @@
+<!DOCTYPE html><html><head>
+  <title>Résumé éco-responsable - Design4Green</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+  <h1>🌱 Design4Green - Résumeur léger</h1>
+  <form id="form">
+    <textarea id="text" placeholder="Collez votre texte ici..."></textarea>
+    <br>
+    <label><input type="checkbox" id="optimized"> Mode optimisé</label>
+    <button type="button" onclick="summarize()">Résumer</button>
+  </form>
+  <div id="result"></div>
+
+  <script>async function summarize() {
+      const text = document.getElementById("text").value;
+      const optimized = document.getElementById("optimized").checked;
+      const resultDiv = document.getElementById("result");
+
+      resultDiv.innerHTML = "<p>⏳ Génération du résumé...</p>";
+
+      const response = await fetch("/summarize", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text, optimized})
+      });
+
+      const data = await response.json();
+      resultDiv.innerHTML = `
+        <p><b>Résumé :</b> ${data.summary}</p>
+        <p>Mode : ${data.optimized ? "Optimisé ⚡" : "Baseline 🧠"}</p>
+        <p>Latence : ${data.latency_ms} ms</p>
+        <p>Énergie : ${data.energy_wh} Wh</p>
+        <p>Mémoire : ${data.memory_mb} MB</p>
+      `;
+    }
+  </script></body></html>
