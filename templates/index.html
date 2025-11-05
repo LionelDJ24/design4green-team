@@ -3,47 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résumeur Éco-Responsable</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Design for Green - Résumeur</title>
+
+     <--On lie le fichier CSS externe -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
 </head>
 <body>
-    <main class="container">
+    <div class="container">
         <h1>🌱 Résumeur Éco-Responsable</h1>
-        <p class="subtitle">Design for Green – Résumé en 10-15 mots avec suivi énergétique</p>
-
-        <form id="resumeForm" onsubmit="return false;">
-            <label for="inputText">Texte à résumer (max 4000 caractères)</label>
-            <textarea id="inputText" maxlength="4000" placeholder="Collez votre texte ici..."></textarea>
-
-            <div class="charcount"><span id="chars">0</span> / 4000 caractères</div>
-
-            <div class="modes">
-                <label><input type="radio" name="mode" value="baseline"> Baseline (FP32)</label>
-                <label><input type="radio" name="mode" value="optimized" checked> Optimisé </label>
+        <p class="subtitle">Design for Green - Résumé en 10-15 mots avec suivi énergétique</p>
+        
+        <form id="summaryForm">
+            <label for="textInput">Texte à résumer (max 4000 caractères)</label>
+            <textarea 
+                id="textInput" 
+                placeholder="Saisissez ou collez votre texte ici..."
+                maxlength="4000"
+                required
+            ></textarea>
+            <div class="char-count">
+                <span id="charCount">0</span> / 4000 caractères
             </div>
-
-            <button id="generateBtn" class="btn">Générer le résumé</button>
-
-            <p class="error" id="error" hidden>❌ Failed to fetch</p>
+            
+            <div class="mode-selector">
+                <label>Mode de traitement</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="baseline" name="mode" value="false" checked>
+                        <label for="baseline">Baseline (FP32)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="optimized" name="mode" value="true">
+                        <label for="optimized">Optimisé <span class="eco-badge">-50% énergie</span></label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" id="submitBtn">Générer le résumé</button>
         </form>
-    </main>
+	
 
-   
+        
+        <div id="loading" class="loading hidden">
+            <p>⏳ Génération en cours...</p>
+        </div>
+        
+        <div id="error" class="error hidden"></div>
+        
+        <div id="results" class="results hidden">
+            <h2>📝 Résultat</h2>
+            <div class="summary-text" id="summaryText"></div>
+            
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-label">⚡ Énergie consommée</div>
+                    <div class="metric-value">
+                        <span id="energyValue">-</span>
+                        <span class="metric-unit">Wh</span>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">⏱️ Latence</div>
+                    <div class="metric-value">
+                        <span id="latencyValue">-</span>
+                        <span class="metric-unit">ms</span>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">🔧 Mode</div>
+                    <div class="metric-value" style="font-size: 1.2rem;">
+                        <span id="modeValue">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JavaScript pour le fonctionnement -->
     <script>
-        const textarea = document.getElementById("inputText");
-        const counter = document.getElementById("chars");
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const form = document.getElementById('summaryForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
 
-        textarea.addEventListener("input", () => {
-            const count = textarea.value.length;
-            counter.textContent = count;
-            if (count >= 4000) {
-                counter.style.color = "crimson";
-            } else if (count > 3600) {
-                counter.style.color = "#c77";
-            } else {
-                counter.style.color = "";
+        textInput.addEventListener('input', () => {
+            charCount.textContent = textInput.value.length;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = textInput.value.trim();
+            const optimized = document.querySelector('input[name="mode"]:checked').value === 'true';
+
+            if (!text) {
+                showError('Veuillez saisir un texte');
+                return;
+            }
+
+            hideError();
+            hideResults();
+            showLoading();
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, optimized })
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Erreur lors de la génération');
+                displayResults(data);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                hideLoading();
+                submitBtn.disabled = false;
             }
         });
+
+        function displayResults(data) {
+            document.getElementById('summaryText').textContent = data.summary;
+            document.getElementById('energyValue').textContent = data.energy_wh.toFixed(6);
+            document.getElementById('latencyValue').textContent = data.latency_ms.toFixed(2);
+            document.getElementById('modeValue').textContent = data.mode;
+            results.classList.remove('hidden');
+        }
+
+        function showLoading() { loading.classList.remove('hidden'); }
+        function hideLoading() { loading.classList.add('hidden'); }
+        function showError(message) {
+            error.textContent = '❌ ' + message;
+            error.classList.remove('hidden');
+        }
+        function hideError() { error.classList.add('hidden'); }
+        function hideResults() { results.classList.add('hidden'); }
     </script>
 </body>
 </html>
